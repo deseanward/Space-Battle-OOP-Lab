@@ -10,7 +10,7 @@ class Game {
 		this.alienSpaceShips = [];
 
 		for (let x = 0; x < 6; x++) {
-			this.alienSpaceShips.push(new AlienSpaceShip());
+			this.alienSpaceShips.push(new AlienSpaceShip(x));
 		}
 		/*************************/
 
@@ -18,52 +18,70 @@ class Game {
 		this.attacker = this.mySpaceShip;
 		this.receiver = this.alienSpaceShips;
 
+		this.idx = 0;
+		this.alienCount = this.alienSpaceShips.length;
+		this.currentAlien = this.alienSpaceShips[this.idx];
+		this.message = '';
+		this.missionOver = false;
+
 		// If the alien space ship gets hit
-		let alienSpaceShipHit = false;
+		this.alienSpaceShipHit = false;
 	}
 
 	// Start new game
 	start() {
-		let idx = 0;
-		let alienCount = idx;
-		let currentAlien = this.alienSpaceShips[idx];
-		let message = '';
-
-		this.stats = `
-     ***** SPACE BATTLE *****
-     ________________________
-
-${this.mySpaceShip.name}     Aliens Destroyed: (${alienCount} of ${this.alienSpaceShips.length})
-Hull: ${this.mySpaceShip.hull}         Hull: ${this.alienSpaceShips[idx].hull}
-
-
-`;
+		alert(
+			`Welcome to *** Space Battle OOP *** \n\nOur universe has been invaded by a horde of alien aircraft. \nIt is your mission, the USS Assembly, to protect us. \n\nPREPARE FOR BATTLE!!! 🚀`
+		);
 		do {
 			// Display the game's stats
-			console.log(this.stats);
-			console.log(`Attacker: ${this.attacker.name}`);
-			this.attacker === this.mySpaceShip
-				? this.mySpaceShip.attackOrRetreat(this.alienSpaceShips[idx])
-				: this.alienSpaceShips[idx].attack();
+			this.alienCount = this.alienSpaceShips.length - this.idx;
+			this.message = '';
+			this.message = `***** SPACE BATTLE OOP *****
+			__________________________________________________________________________
+			
+			🚀 ${this.mySpaceShip.name}     👾 Aliens Remaining: ${this.alienCount}
+			       Hull: ${this.mySpaceShip.hull}                	   Hull: ${
+				this.alienSpaceShips[this.idx].hull
+			}
+			
+			`;
+			this.message += `	${this.attacker.name}: Ready To Attack!`;
 
-			this.alienSpaceShipHit === true ? idx++ : null;
+			// Prompts the user to attack or retreat
+			this.attacker === this.mySpaceShip
+				? this.mySpaceShip.attackOrRetreat(
+						this.alienSpaceShips[this.idx]
+				  )
+				: this.alienSpaceShips[this.idx].attack();
+
+			this.alienSpaceShipHit === true ? this.idx++ : null;
+			this.alienCount = this.alienSpaceShips.length - this.idx;
 
 			this.alienSpaceShipHit = false;
-		} while (idx < this.alienSpaceShips.length);
-
-		if (idx >= this.alienSpaceShips.length)
-			console.log('All alien ships have been destroyed!');
+		} while (this.idx < this.alienSpaceShips.length);
 
 		game.end();
 	}
 
 	// End the game
 	end() {
-		const playAgain = prompt('Play Again?').toLowerCase();
-		if (playAgain === 'yes' || playAgain === 'y') {
+		const playAgain = prompt(
+			"Play Again? ('Yes/Y' or 'No/N') ...or Enter Any Key to Resume"
+		).toLowerCase();
+
+		if (
+			playAgain === 'yes' ||
+			playAgain === 'y' ||
+			game.missionOver === true
+		) {
 			console.clear();
 			game = new Game();
 			game.start();
+		} else if (playAgain === 'no' || playAgain === 'n') {
+			console.clear();
+			window.close(alert('Thanks for playing!'));
+			return;
 		}
 	}
 
@@ -72,10 +90,6 @@ Hull: ${this.mySpaceShip.hull}         Hull: ${this.alienSpaceShips[idx].hull}
 		this.attacker = receiver;
 		this.receiver = attacker;
 	}
-
-	// shipDestroyed() {
-	// 	console.log(`Destroyed`);
-	// }
 }
 
 /**
@@ -83,35 +97,70 @@ Hull: ${this.mySpaceShip.hull}         Hull: ${this.alienSpaceShips[idx].hull}
  */
 class SpaceShip {
 	constructor() {
-		this.destroyShip = this.destroyShip.bind(this);
-
 		this.attack = this.attack.bind(this);
 		this.enemyHit = this.enemyHit.bind(this);
 	}
 
 	attack(enemy) {
-		console.log(`${this.name} is attacking...`);
-		this.accuracy >= enemy.accuracy
-			? this.enemyHit(enemy)
-			: game.switchAttacker(this, enemy);
+		// Customized message for who's currently attacking
+		const nowAttacking =
+			enemy.name === 'Alien Ship'
+				? 'IS NOW ATTACKING!'
+				: ', ATTACK NOW! 💣💣💣';
+
+		// Determine if the attack will hit according to accuracy
+		if (Math.random() < this.accuracy) {
+			this.enemyHit(enemy);
+		} else {
+			alert(
+				`❗*** ALERT ***❗ \n${this.name}'s attack has failed! \n\n${enemy.name} ${nowAttacking}`
+			);
+
+			// Switch attackers on failed attack
+			game.switchAttacker(this, enemy);
+		}
 	}
 
 	// The enemy has been hit
 	enemyHit(enemy) {
-		console.log(`${enemy.name} has been destroyed!`);
-		if (enemy.name === 'Alien Ship') game.alienSpaceShipHit = true;
-		else game.end();
-	}
+		console.log(enemy);
+		enemy.hull -= this.firepower;
 
-	// // Destroy the ship
-	destroyShip(name = 'some ship') {
-		console.log(`${name} Destroyed!`);
+		// Customized message for who's attacking
+		const nowAttacking =
+			enemy.name === 'Alien Ship'
+				? ", HIT 'EM AGAIN"
+				: 'is still attacking';
+
+		// If either enemy's hull is still intact (USS Assembly or Alien Space Ship)
+		if (enemy.hull > 0) {
+			alert(
+				`⚠*** WARNING ***⚠ \n${enemy.name} has been hit 🔥🔥🔥, but is still operable! \n\nDamage to Hull: -${this.firepower} \nRemaining Hull: ${enemy.hull} \n\n ${this.name} ${nowAttacking}!`
+			);
+		} else {
+			enemy.name === 'Alien Ship'
+				? enemy.id === game.alienSpaceShips.length - 1
+					? alert(
+							'🚀🚀🚀*** MISSION ACCOMPLISHED ***🚀🚀🚀 \n\nAll alien ships have been destroyed! It is now safe to moonwalk!!!',
+							(game.missionOver = true)
+					  )
+					: alert(
+							`👍*** SUCCESS ***👍 \n${enemy.name} ${
+								enemy.id + 1
+							} of ${
+								game.alienSpaceShips.length
+							} has been destroyed! \n\nBut, the mission's not over... continue attacking!`
+					  )
+				: alert(
+						`👾👾👾*** MISSION FALIED ***👾👾👾 \n\nThe ${enemy.name} has been destroyed! \nThe universe is now under alien control!`,
+						(game.missionOver = true)
+				  );
+			
+			// Keeps track of when the USS Assembly or Alien Space Ship gets hit
+			if (enemy.name === 'Alien Ship') game.alienSpaceShipHit = true;
+			else game.end();
+		}
 	}
-	// this.hull = hull;
-	// this.firepower = firepower;
-	// this.accuracy = accuracy;
-	// Functions
-	// Attack
 }
 
 /**
@@ -126,8 +175,11 @@ class USSAssembly extends SpaceShip {
 	firepower = 5;
 	accuracy = 0.7;
 
+	// Prompts the user to attack or retreat
 	attackOrRetreat(enemy) {
-		const decide = prompt('Enter [1] to Attack or [2] to Retreat');
+		const decide = prompt(
+			`${game.message} \n\nEnter [1] to Attack or [2] to Retreat\n\n`
+		);
 
 		if (decide === null || decide === '') return;
 
@@ -135,7 +187,7 @@ class USSAssembly extends SpaceShip {
 			? this.attack(enemy)
 			: decide === '2'
 			? this.retreat()
-			: this.attackOrRetreat();
+			: this.attackOrRetreat(); // Re-instatiates the prompt if 'decide' is neither 1 or 2
 	}
 
 	attack(enemy) {
@@ -143,7 +195,7 @@ class USSAssembly extends SpaceShip {
 	}
 
 	retreat() {
-		console.log('retreating');
+		game.end();
 	}
 }
 
@@ -151,15 +203,14 @@ class USSAssembly extends SpaceShip {
  * ********** Alien SpaceSpaceShip Class **********
  */
 class AlienSpaceShip extends SpaceShip {
-	constructor() {
+	constructor(id) {
 		super();
 
 		/***** Initial properties *****/
 		this.hull = Math.floor(Math.random() * 4) + 3;
 		this.firepower = Math.floor(Math.random() * 3) + 2;
 		this.accuracy = (Math.random() * 0.2 + 0.6).toFixed(1);
-
-		this.destroyShip = this.destroyShip.bind(this);
+		this.id = id;
 	}
 
 	name = 'Alien Ship';
@@ -169,17 +220,10 @@ class AlienSpaceShip extends SpaceShip {
 	attack() {
 		super.attack(game.mySpaceShip);
 	}
-
-	// // Destroyed
-	// destroyShip() {
-	// 	super.destroyShip(this.name);
-	// }
-
-	// Send Next Ship
-	sendNextShip() {}
 }
 
 // Create new game
 let game = new Game();
+
 // Start the game
 game.start();
